@@ -6,9 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\User;
-use Validator;
-
-
+use Illuminate\Support\Facades\Validator;
+use App\Notifications\SignupActivate;
+use App\Notifications\UserWelcomeNotification;
+use Illuminate\Support\Str;
 
 
 class AuthController extends Controller
@@ -34,12 +35,12 @@ class AuthController extends Controller
             'response' => ''
         );
 
-
         //Validator
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
+            'username' => 'required|string',
+            'department' => 'required',
             'email' => 'required|string|email|unique:users',
-            'password' => 'required|string|confirmed'
+            'phone' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -52,21 +53,29 @@ class AuthController extends Controller
             ], 422);
         }
 
+
+
         //Creating a New Instance of the User After the Validation Has Passed
-        $user = new User([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password)
-        ]);
+        $user = new User();
+
+        $user->username = $request->username;
+        $user->email = $request->email;
+        $user->phone = $request->phone;
+        $user->department = $request->department;
+        $user->is_admin = false;
+        $user->activation_token = Str::random(60);
+
 
         if ($user->save()) {
+            //Sending the account confirmation Email to the User
+            $user->notify(new SignupActivate($user));
             return response()->json([
                 'message' => 'Successfully created user!',
                 'user' => $user,
+                'activation_url' => "http://localhost:8000/api/auth/signup/activate/" . $user->activation_token,
                 'status' => 201
             ], 201);
         } else {
-
             return response()->json([
                 'message' => 'Error in Creating User!',
                 'status ' => 500
@@ -74,6 +83,102 @@ class AuthController extends Controller
         }
     }
 
+    //Sign Up Activate
+    public function signupActivate($token)
+    {
+
+        //Authencticating  the token
+
+        $user = User::where('activation_token', $token)->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'This activation token is invalid.',
+                "status" => 403
+            ], 403);
+        }
+
+        $user->active = true;
+        $user->email_verified_at = Carbon::now()->toDateTimeString();
+        $user->activation_token = 'token_verified';
+
+        if ($user->save()) {
+            return response()->json([
+                'message' => 'Link Verified Successfully.Kindly Proceed to put in your Password',
+                "data" => $user,
+                "status" => 200
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'An error was encountered while activating your token.',
+            ], 404);
+        }
+    }
+
+
+    //Submitting the Password After Verified Account Confirmation
+    public function submitPassword(Request $request)
+    {
+
+        //Validation
+        $response = array(
+            'response' => ''
+        );
+
+        //Validator
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
+            'password' => 'required|string'
+        ]);
+
+        if ($validator->fails()) {
+
+            $response['response'] = $validator->messages();
+
+            return response()->json([
+                'errors' => $response,
+
+            ], 422);
+        }
+
+
+        //Searching to verify if the token is valid
+
+        $user = User::where([
+            ['active', true],
+            ['email', $request->email],
+        ])->first();
+
+        if (!$user) {
+
+            return response()->json([
+                'message' => 'This is not a registred User !',
+                'status' => '200'
+
+            ], 404);
+        } else {
+
+            $user->password = bcrypt($request->password);
+            $user->save();
+
+            if ($user->save()) {
+
+                //Sending a Welcome Notification to the User
+                $user->notify(new UserWelcomeNotification($user));
+                //Creating a Passport Access token
+                $tokenStr = $user->createToken('Personal Access Token');
+                return response()->json([
+                    'message' => 'Password Successfully set.',
+                    'user' => $user,
+                    'access_token' => $tokenStr->accessToken,
+                    'status' => '200',
+                    'token_type' => 'Bearer',
+                    'expires_at' => Carbon::parse(
+                        $tokenStr->token->expires_at
+                    )->toDateTimeString(),
+                ], 200);
+            }
+        }
+    }
     /**
      * Login user and create token
      *
@@ -86,15 +191,30 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $request->validate([
+
+        //Validation
+        $response = array(
+            'response' => ''
+        );
+
+        //Validator
+        $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
-            'password' => 'required|string',
+            'password' => 'required'
         ]);
 
+        if ($validator->fails()) {
+
+            $response['response'] = $validator->messages();
+
+            return response()->json([
+                'errors' => $response,
+
+            ], 422);
+        }
 
         //User LogIn Credentials
         $credentials = request(['email', 'password']);
-
 
         //If Authirization fails
         if (!Auth::attempt($credentials))
@@ -121,6 +241,7 @@ class AuthController extends Controller
             "data" => $user,
             'access_token' => $tokenResult->accessToken,
             'token_type' => 'Bearer',
+            'status' => 200,
             'expires_at' => Carbon::parse(
                 $tokenResult->token->expires_at
             )->toDateTimeString()
