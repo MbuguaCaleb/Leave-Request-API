@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\User;
+use Validator;
+
+
+
 
 class AuthController extends Controller
 {
@@ -23,12 +27,32 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
 
-        $request->validate([
+
+        //Catching Validation Errors
+
+        $response = array(
+            'response' => ''
+        );
+
+
+        //Validator
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string',
             'email' => 'required|string|email|unique:users',
             'password' => 'required|string|confirmed'
         ]);
 
+        if ($validator->fails()) {
+
+            $response['response'] = $validator->messages();
+
+            return response()->json([
+                'errors' => $response,
+
+            ], 422);
+        }
+
+        //Creating a New Instance of the User After the Validation Has Passed
         $user = new User([
             'name' => $request->name,
             'email' => $request->email,
@@ -37,12 +61,15 @@ class AuthController extends Controller
 
         if ($user->save()) {
             return response()->json([
-                'message' => 'Successfully created user!'
+                'message' => 'Successfully created user!',
+                'user' => $user,
+                'status' => 201
             ], 201);
         } else {
 
             return response()->json([
-                'message' => 'Error in Creating User!'
+                'message' => 'Error in Creating User!',
+                'status ' => 500
             ], 500);
         }
     }
@@ -90,6 +117,8 @@ class AuthController extends Controller
         $token->save();
 
         return response()->json([
+            "message" => "User successfully logged in!",
+            "data" => $user,
             'access_token' => $tokenResult->accessToken,
             'token_type' => 'Bearer',
             'expires_at' => Carbon::parse(
@@ -108,9 +137,13 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+
+        //entails the rovoking of the generated Token
         $request->user()->token()->revoke();
         return response()->json([
-            'message' => 'Successfully logged out'
+            "data" => "token revoked!",
+            'message' => 'Successfully logged out',
+            "status" => 200
         ]);
     }
 
@@ -122,6 +155,10 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        return response()->json($request->user());
+
+        //getting the user after you are logged in
+        //From the token
+        $user = $request->user();
+        return response()->json(["data" => "user successfully fetched from the token", 'user' => $user, "status" => 200]);
     }
 }
