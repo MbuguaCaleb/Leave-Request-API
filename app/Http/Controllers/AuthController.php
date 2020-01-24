@@ -219,7 +219,9 @@ class AuthController extends Controller
         //If Authirization fails
         if (!Auth::attempt($credentials))
             return response()->json([
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized',
+                'data' => 'You have put in the Wrong Credentials',
+                'status' => 401
             ], 401);
 
 

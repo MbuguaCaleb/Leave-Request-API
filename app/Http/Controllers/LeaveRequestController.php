@@ -2,7 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use App\leaverequest;
+use Illuminate\Support\Facades\Validator;
+
+
 
 class LeaveRequestController extends Controller
 {
@@ -14,7 +19,7 @@ class LeaveRequestController extends Controller
     public function index()
     {
         //
-        
+
     }
 
     /**
@@ -25,6 +30,8 @@ class LeaveRequestController extends Controller
     public function create()
     {
         //
+
+
     }
 
     /**
@@ -35,7 +42,52 @@ class LeaveRequestController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        //Validating for the incoming Request
+
+        $response = array(
+            'response' => ''
+        );
+
+        //Validator
+        $validator = Validator::make($request->all(), [
+            'starting_date' => 'required',
+            'ending_date' => 'required',
+            'request_reason' => 'required',
+
+        ]);
+
+        if ($validator->fails()) {
+
+            $response['response'] = $validator->messages();
+
+            return response()->json([
+                'errors' => $response,
+
+            ], 422);
+        }
+
+        //Creating the Request if the Validation does pass
+        //Creating a New Instance of the User After the Validation Has Passed
+        $userRequest = new leaverequest();
+
+        $userRequest->starting_date = $request->starting_date;
+        $userRequest->ending_date = $request->ending_date;
+        $userRequest->request_reason = $request->request_reason;
+        $userRequest->approval_status = false;
+        $userRequest->user_id = Auth::user()->id;
+
+
+        if ($userRequest->save()) {
+
+            return '1';
+            //Send Notification Mail to the Admin
+        } else {
+
+            return '2';
+
+            //Error during the Request
+        }
     }
 
     /**
