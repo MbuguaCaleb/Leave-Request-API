@@ -11,14 +11,17 @@ class UserWelcomeNotification extends Notification
 {
     use Queueable;
 
+    protected $user;
+
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($user)
     {
         //
+        $this->user = $user;
     }
 
     /**
@@ -40,10 +43,12 @@ class UserWelcomeNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+
+        //user object is passed from the notification
+        $user = $this->user;
+        return (new MailMessage)->markdown('notifications.WelcomeUser', ['user' => $user])
+            ->subject('CONFIRM ACCOUNT')
+            ->from('info@yumkenya.co.ke', 'YUM FOOD DELIVERIES');
     }
 
     /**

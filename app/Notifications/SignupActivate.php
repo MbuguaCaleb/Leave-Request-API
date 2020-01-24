@@ -9,16 +9,18 @@ use Illuminate\Notifications\Notification;
 
 class SignupActivate extends Notification
 {
+
     use Queueable;
 
+    protected $user;
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($user)
     {
-        //
+        $this->user = $user;
     }
 
     /**
@@ -40,13 +42,15 @@ class SignupActivate extends Notification
      */
     public function toMail($notifiable)
     {
+        //user object is passed from the notification
+        $user = $this->user;
 
-        $url = url('/api/auth/signup/activate/' . $notifiable->activation_token);
-        return (new MailMessage)
-            ->subject('Confirm your account')
-            ->line('Thanks for signup! Please before you begin, you must confirm your account.')
-            ->action('Confirm Account', url($url))
-            ->line('Thank you for using our application!');
+        //url php fuction
+        $url = url('api/signup/activate/' . $notifiable->activation_token);
+
+        return (new MailMessage)->markdown('notifications.userRegister', ['user' => $user, 'url' => $url])
+            ->subject('CONFIRM ACCOUNT')
+            ->from('info@yumkenya.co.ke', 'YUM FOOD DELIVERIES');
     }
 
     /**

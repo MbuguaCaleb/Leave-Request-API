@@ -31,3 +31,12 @@ Route::group([
         Route::get('user', 'AuthController@user');
     });
 });
+
+
+//Protecting API against Unauthorized Routes
+Route::fallback(function () {
+
+    return response()->json([
+        'message' => 'Page Not Found. If error persists, contact info@yumdeliveries.co.ke',
+    ], 404);
+});
