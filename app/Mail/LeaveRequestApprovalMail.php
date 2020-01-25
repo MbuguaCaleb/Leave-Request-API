@@ -32,8 +32,18 @@ class LeaveRequestApprovalMail extends Mailable
     public function build()
     {
         $adminFeedBackDetailsArray =  $this->adminFeedBackDetailsArray;
-        print_r($adminFeedBackDetailsArray);
-        die();
-        return $this->view('view.name');
+        $request_reason = $adminFeedBackDetailsArray['request_reason'];
+        $admin_feedback = $adminFeedBackDetailsArray['admin_feedback'];
+        $starting_date = $adminFeedBackDetailsArray['starting_date'];
+        $ending_date = $adminFeedBackDetailsArray['ending_date'];
+        $username = $adminFeedBackDetailsArray['username'];
+
+        return $this->view('notifications.adminLeaveRequestFeedBack')->with([
+            'admin_feedback' => $admin_feedback,
+            'starting_date' => $starting_date,
+            'ending_date' => $ending_date,
+            'request_reason' => $request_reason,
+            'username' => $username
+        ])->subject('ADMIN LEAVE REQUEST FEEDBACK NOTIFICATION');
     }
 }

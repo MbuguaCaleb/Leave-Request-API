@@ -227,7 +227,7 @@ class LeaveRequestController extends Controller
 
                 Mail::to($useremail)->send(new LeaveRequestApprovalMail($adminFeedBackDetailsArray));
                 return response()->json([
-                    "message" => "Congratulations!You have Successfully made a Request for your leave and your details have been sent to the admin for approval",
+                    "message" => "Congratulations!You Have Successfully given feedback to the user and an email sent to them",
                     "data" => $find_user_by_id,
                     "status" => 200
                 ]);
