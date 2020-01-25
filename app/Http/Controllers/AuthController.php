@@ -70,7 +70,7 @@ class AuthController extends Controller
             //Sending the account confirmation Email to the User
             $user->notify(new SignupActivate($user));
             return response()->json([
-                'message' => 'Successfully created user!',
+                'message' => 'Successfully created user!An activation Email for you to set your password has been sent to your account',
                 'user' => $user,
                 'activation_url' => "http://localhost:8000/api/auth/signup/activate/" . $user->activation_token,
                 'status' => 201

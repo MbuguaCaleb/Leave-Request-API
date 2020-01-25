@@ -260,7 +260,7 @@
     <header>
         <div class="container">
             <div id="branding">
-                <h1><span class="highlight">Yum Deliveries </span><span class="highlighttwo ">Ltd</span> </h1>
+                <h1><span class="highlight">Yum Deliveries Ltd </span></h1>
             </div>
 
         </div>

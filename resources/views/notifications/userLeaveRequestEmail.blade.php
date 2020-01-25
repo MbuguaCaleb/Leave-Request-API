@@ -270,20 +270,21 @@
         <div class="container">
 
             <p class="initial-margin">
-                Dear :{{$user->username}}
+                Dear :Administator &nbsp;{{$admin_email}}
             </p>
-            <p class="initial-margin">Welcome to Our Leave Management Application.You are in the process of completing with your registration.
-            </p>
-
-            <p class="initial-margin">Please click the link below to set up your user Account Password.
+            <p class="initial-margin">It is my Hope this Email finds you well?
             </p>
 
+            <p class="initial-margin">Kindly receive the Leave Request for {{$username}} from the {{$department}} .
+            </p>
+
+            <p class="initial-margin"> They are requesting this as from {{$start_date}} to {{$end_date}} reason {{$request_reason}}
+            </p>
+
+
+            <p class="initial-margin"> Please Log into the System to either approve or decline this request.
+            </p>
             <br>
-
-
-            <a href={{$url}} class="btn btn-primary btn-lg active" role="button" aria-pressed="true">Activation Link</a>
-
-            <br><br>
 
 
             <a href="https://yum.co.ke/">Yum Deliveries Limited</a>
