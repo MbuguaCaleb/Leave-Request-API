@@ -272,13 +272,13 @@
             <p class="initial-margin">
                 Dear :Administator &nbsp;{{$admin_email}}
             </p>
-            <p class="initial-margin">It is my Hope this Email finds you well?
+            <p class="initial-margin">It is my Hope that this Email finds you well?
             </p>
 
-            <p class="initial-margin">Kindly receive the Leave Request for {{$username}} from the {{$department}} .
+            <p class="initial-margin">Kindly receive Leave Request for {{$username}} from the {{$department}} department.
             </p>
 
-            <p class="initial-margin"> They are requesting this as from {{$start_date}} to {{$end_date}} reason {{$request_reason}}
+            <p class="initial-margin"> They are requesting this as from {{$start_date}} to {{$end_date}} reason : {{$request_reason}}
             </p>
 
 

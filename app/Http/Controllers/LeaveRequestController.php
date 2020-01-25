@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\leaverequest;
+use App\Mail\LeaveRequestApprovalMail;
 use App\Mail\UserLeaveRequestMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -142,7 +143,13 @@ class LeaveRequestController extends Controller
      */
     public function show($id)
     {
-        //
+        //showing single leave Request
+        $single_leave_request = leaverequest::where('id', $id)->with('user')->first();
+        return response()->json([
+            "data" => $single_leave_request,
+            "message" => "Data for a single user fetched successfully.",
+            "status" => 200
+        ]);
     }
 
     /**
@@ -165,7 +172,84 @@ class LeaveRequestController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        //Approval of the Leave Request 
+
+        //First the User Who approves a request should be an admin
+        if (Auth::user()->is_admin) {
+
+            //Validate the incoming Request Data
+            //Validating for the incoming Request
+
+            $response = array(
+                'response' => ''
+            );
+
+            //Validator
+            $validator = Validator::make($request->all(), [
+                'approval_status' => 'required',
+
+            ]);
+            if ($validator->fails()) {
+                $response['response'] = $validator->messages();
+                return response()->json([
+                    'errors' => $response,
+
+                ], 422);
+            }
+
+            //Proceeding the Approve the Request
+            $find_user_by_id = leaverequest::find($id);
+
+            if (!$find_user_by_id) {
+                return response()->json([
+                    'data' => "Please Put in a user with a valid Leave request ID ",
+                    'status' => 404,
+
+                ], 404);
+            }
+
+            //Executing save
+            $find_user_by_id = leaverequest::find($id);
+            $find_user_by_id->approval_status = true;
+            $find_user_by_id->admin_feedback = $request->admin_feedback;
+            if ($find_user_by_id->save()) {
+                //Send a noticiation email
+
+                $find_user_by_id = leaverequest::where('id', $id)->with('user')->first();
+                $request_reason = $find_user_by_id->request_reason;
+                $admin_feedback = $find_user_by_id->admin_feedback;
+                $starting_date = $find_user_by_id->starting_date;
+                $ending_date = $find_user_by_id->ending_date;
+                $username = $find_user_by_id->user->username;
+                $useremail = $find_user_by_id->user->email;
+
+                $adminFeedBackDetailsArray = ['request_reason' => $request_reason, 'admin_feedback' => $admin_feedback, 'starting_date' => $starting_date, 'ending_date' => $ending_date, 'username' => $username];
+
+                Mail::to($useremail)->send(new LeaveRequestApprovalMail($adminFeedBackDetailsArray));
+                return response()->json([
+                    "message" => "Congratulations!You have Successfully made a Request for your leave and your details have been sent to the admin for approval",
+                    "data" => $find_user_by_id,
+                    "status" => 200
+                ]);
+            } else {
+                //Error during the Request
+
+                return response()->json([
+                    'message' => 'Please try again later!There was an error during submission of your request',
+                    'status ' => 500
+                ], 500);
+            }
+            // Not reapproving the request Validation
+
+        } else {
+
+            //Error during the Request
+
+            return response()->json([
+                'message' => 'You are forbidden to make this Request since you are not an admin',
+                'status ' => 403
+            ], 403);
+        }
     }
 
     /**

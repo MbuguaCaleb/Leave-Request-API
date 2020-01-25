@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class leaverequest extends Model
 {
-    //
+
+
 
     //Fillables
     protected $fillable = [
-        'request_reason',  'decline_reason', 'starting_date', 'ending_date', 'approval_status', 'user_id'
+        'request_reason',  'admin_feedback', 'starting_date', 'ending_date', 'user_id', 'approval_status'
     ];
 
 
